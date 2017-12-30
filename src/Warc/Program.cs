@@ -10,16 +10,37 @@ namespace Warc
     {
         static void Main(string[] args)
         {
-            var warcFilePath = @"C:\Repos\warc\data\arabicweb16.categorized.content.warc";
+            var warcFilePath = @"C:\Corpus\src.warc";
+
+            var infoPath = @"C:\Corpus\info.txt";
 
             List<WarcItem> items = new List<WarcItem>();
 
             Console.WriteLine("Reading ...");
 
+            var info = File.ReadLines(infoPath).ToList();
+
+            var infoList = ExtractInfo(info);
+
             var text = File.ReadAllText(warcFilePath);
 
             var warcItems = ExtractWarCItems(text);
 
+            FillWarItemList(items, warcItems);
+
+            var newsOnly = FilterNews(items, infoList);
+
+            foreach (var item in newsOnly)
+            {
+                item.Save();
+            }
+
+            //Save(items);
+
+        }
+
+        private static void FillWarItemList(List<WarcItem> items, List<string> warcItems)
+        {
             int count = warcItems.Count;
             int index = 1;
 
@@ -31,11 +52,17 @@ namespace Warc
 
                 index++;
             }
-
-            Save(items);
-
         }
 
+        private static List<WarcItem> FilterNews(List<WarcItem> items,List<InfoFile> infos)
+        {
+
+            var newsDocIds = infos.Where(a => a.Category == "NEWS_MEDIA").Select(a=> a.DocId).ToList();
+
+            var result = items.Where(a => newsDocIds.Contains(a.DocId)).ToList();
+
+            return result;
+        }
 
         public static List<string> ExtractWarCItems(string data)
         {
@@ -48,6 +75,22 @@ namespace Warc
             foreach (Match item in matches)
             {
                 result.Add(item.Value);
+            }
+
+            return result;
+        }
+
+        public static List<InfoFile> ExtractInfo(List<string> data)
+        {
+            List<InfoFile> result = new List<InfoFile>();
+
+
+            foreach (var item in data)
+            {
+                var info = InfoFile.Create(item);
+
+                if (info != null)
+                    result.Add(info);
             }
 
             return result;

@@ -20,6 +20,8 @@ namespace Warc
 
         public string BodyStrip { get; set; }
 
+        public string RawText { get; set; }
+
         public static WarcItem Create(string data)
         {
             var body = ExtractBody(data);
@@ -27,7 +29,8 @@ namespace Warc
             {
                 DocId = ExtractDocId(data),
                 Body  = body,
-                BodyStrip = StripHtml(body)
+                BodyStrip = StripHtml(body),
+                RawText = data
             };
         }
 
@@ -54,7 +57,7 @@ namespace Warc
             if (split.Length > 1)
                 result = split[1];
 
-            return result;
+            return result.Trim();
         }
 
         public static string ExtractBody(string data)
@@ -76,7 +79,7 @@ namespace Warc
             if (String.IsNullOrWhiteSpace(Body))
                 return;
 
-            var output = $"output\\{DocId}.txt";
+            var output = $"C:\\Corpus\\news\\{DocId}.txt";
 
             File.WriteAllText(output,BodyStrip);
         }
